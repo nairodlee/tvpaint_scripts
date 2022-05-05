@@ -1,0 +1,371 @@
+//------------------------------------------
+//
+//	Find
+//
+//	Function: find a character into a string
+//            from a specified start position
+//
+//	Call: Find(string,car,start)
+//
+//	Arguments:
+//		string = characters string
+//		car    = character to look for
+//		start  = start position in string
+//
+//	Return: position of character
+//			0 if character does not exist
+//			into string
+//			-1 if invalid position
+//			(negative, null or higher
+//			 than string length)
+//
+//------------------------------------------
+
+FUNCTION Find(string,car,start)
+	LOCAL i size
+	i = start
+	size = LEN(string)
+
+	IF ((start <= 0) || (start > size) || (CMP(car,"") == 1))
+		RETURN -1
+	END
+	DO
+		IF (CMP(CHAR(string,i),car) == 1)
+			RETURN i
+		END
+	UNTIL ((i=i+1) > size)
+	RETURN 0
+END
+
+
+//------------------------------------------
+//
+//	NewParse
+//
+//	Function: cut a string into several parts and
+//            store each part into a variable.
+//            The string is cut before each
+//            occurence of a specified character.
+//
+//	Call: NewParse(string,divider)
+//
+//	Arguments:
+//		string  = characters string
+//		divider = character used as a separator
+//                between each part of the string
+//
+//	Return: number of variables created.
+//          This function create global variables
+//			named var(1), var(2)...var(N), where
+//          N is the value returned by the function.
+//
+//  Note: if the string contained two or more
+//        successive separators, no variable is
+//        created for these parts of the string.
+//        For example, if you call the NewParse
+//        function for "First;;Second" with
+//        divider=";", only two variables are
+//        created (var(1)="First" and
+//        var(2)="Second").
+//
+//------------------------------------------
+
+
+FUNCTION NewParse(string,divider)
+	LOCAL pos i workstr size
+	i = 0
+	pos = 1
+	workstr = string
+
+	IF ((CMP(workstr,"") == 0) && (CMP(divider,"") == 0) && (CMP(workstr,divider) == 0))
+		WHILE ((pos = Find(workstr,divider,1)) > 0)
+			PRINT 'WHILE'
+			IF ((pos != 1) && (pos != LEN(workstr)))
+			PRINT 'WHILE IF'
+				i = i+1
+				var(i) = CUT(workstr,1,pos-1)
+				workstr = CUT(workstr,pos+1,LEN(workstr))
+			ELSE
+			PRINT 'WHILE ELSE'
+				IF (pos == 1)
+				PRINT 'WHILE ELSE IF'
+					IF (pos != LEN(workstr))
+						workstr = CUT(workstr,2,LEN(workstr))
+					ELSE
+					PRINT 'WHILE ELSE ELSE'
+						workstr = ""
+					END
+				ELSE
+				PRINT 'WHILE ELSE'
+					workstr = CUT(workstr,pos,LEN(workstr))
+				END
+			END
+		END
+		PRINT 'NO WHILE'
+		if (CMP(workstr,0) == 0)
+			i = i+1
+			var(i) = workstr
+		END
+	END
+	RETURN i
+END
+
+
+FUNCTION CheckFileName(string,divider)
+	LOCAL pos i workstr size
+	i = 0
+	pos = 1
+	workstr = string
+
+	IF ((CMP(workstr,"") == 0) && (CMP(divider,"") == 0) && (CMP(workstr,divider) == 0))
+		WHILE ((pos = Find(workstr,divider,1)) > 0)
+			IF ((pos != 1) && (pos != LEN(workstr)))
+				i = i+1
+				workstr = CUT(workstr,pos+1,LEN(workstr))
+			ELSE
+				IF (pos == 1)
+					IF (pos != LEN(workstr))
+						workstr = CUT(workstr,2,LEN(workstr))
+					ELSE
+						workstr = ""
+					END
+				ELSE
+					workstr = CUT(workstr,pos,LEN(workstr))
+				END
+			END
+		END
+		if (CMP(workstr,0) == 0)
+			i = i+1
+		END
+	END
+	RETURN i
+END
+
+
+//------------------------------------------
+//
+//	Replace
+//
+//	Function: replace each occurence of a
+//            substring into a string with
+//            another string
+//
+//	Call: Replace(string,search,repl)
+//
+//	Arguments:
+//		string  = characters string
+//		search  = substring to look for
+//		repl    = replacement substring
+//
+//	Return: result string after replacement
+//
+//------------------------------------------
+
+FUNCTION Replace(string,search,repl)
+	LOCAL pos workstr str1 str2 size
+	pos = 1
+	workstr = string
+	size = LEN(search)
+
+	WHILE ((pos = FindString(workstr,search,pos)) > 0)
+		IF (pos == 1)
+			str1 = CUT(workstr,size+1,LEN(workstr))
+			workstr = repl""str1
+			pos = 0
+		ELSE
+			str1 = CUT(workstr,1,pos-1)
+			IF ((pos+size) < LEN(workstr))
+				str2 = CUT(workstr,pos+size,LEN(workstr))
+				workstr = str1""repl""str2
+			ELSE
+				workstr = str1""repl
+			END
+		END
+		pos = pos+LEN(repl)
+	END
+	RETURN workstr
+END
+
+
+//------------------------------------------
+//
+//	LastPos
+//
+//	Function: find last occurence of a
+//			  character into a string
+//
+//	Call: LastPos(string,car)
+//
+//	Arguments:
+//		string = characters string
+//		car    = character to look for
+//
+//	Return: position of character
+//			or 0 if character does not
+//			exist into string.
+//
+//------------------------------------------
+
+//------------------------------------------
+//
+//	FindString
+//
+//	Function: find a substring into a string
+//             from a specified start position
+//
+//	Call: FindString(string,search,start)
+//
+//	Arguments:
+//		string = characters string
+//		search = substring to look for
+//		start  = start position in string
+//
+//	Return: start position of substring
+//			0 if substring does not exist
+//			into string
+//			-1 if invalid start position
+//			(negative, null or higher
+//			than string length) or if
+//          substring is empty
+//
+//------------------------------------------
+
+FUNCTION FindString(string,search,start)
+	LOCAL found j pos lastpos lstr lsrch
+	found = 0
+	lastpos = start
+	lstr = LEN(string)
+	lsrch = LEN(search)
+
+	IF (CMP(search,"") == 1)
+		RETURN -1
+	END
+	WHILE ((pos = Find(string,CHAR(search,1),lastpos)) > 0)
+		j = 1
+		found = 1
+		IF (j == lsrch)
+			RETURN pos
+		END
+		WHILE ((j < lsrch) && (found == 1))
+			IF ((pos+j) > lstr)
+				RETURN 0
+			ELSE
+				IF (CMP(CHAR(search,j+1),CHAR(string,pos+j)) == 0)
+					lastpos = pos+j
+					found = 0
+				END
+			END
+			j = j+1
+		END
+		IF (found == 1)
+			RETURN pos
+		END
+	END
+	RETURN pos
+END
+
+
+//------------------------------------------
+//
+//	LastPos
+//
+//	Function: find last occurence of a
+//			  character into a string
+//
+//	Call: LastPos(string,car)
+//
+//	Arguments:
+//		string = characters string
+//		car    = character to look for
+//
+//	Return: position of character
+//			or 0 if character does not
+//			exist into string.
+//
+//------------------------------------------
+
+FUNCTION LastPos(string,car)
+	LOCAL loop  myChar
+	pos = LEN(string)
+	loop = 1
+	WHILE loop
+		myChar = CHAR(string,pos)
+
+		IF CMP(myChar,car) == 1
+			loop =0
+		ELSE
+			pos = pos-1
+		END
+		IF pos<1
+			loop=0
+		END
+	END
+	RETURN pos
+END
+
+
+//------------------------------------------
+//
+//	RightString
+//
+//	Function: extract a substring ending
+//            at the end of a string
+//
+//	Call: RightString(string,number)
+//
+//	Arguments:
+//		string  = characters string
+//		number  = number of character to
+//			      extract from string
+//
+//	Return: result substring
+//			or 0 if number is negative
+//          or null.
+//
+//------------------------------------------
+
+FUNCTION RightString(string,number)
+	LOCAL size
+	size = LEN(string)
+
+	IF (number > 0)
+		IF (number > size)
+			number = size
+		END
+		RETURN CUT(string,size-number+1,size)
+	END
+	RETURN 0
+END
+
+//------------------------------------------
+//
+//	SubString
+//
+//	Function: extract a substring
+//
+//
+//	Call: SubString(string,start,end)
+//
+//	Arguments:
+//		string  = characters string
+//		start  = first character to extract from
+//		end  = last character to extract to
+//
+//	Return: result substring
+//			or 0 if number is negative
+//          or null.
+//
+//------------------------------------------
+
+FUNCTION SubString(string,start,end)
+	LOCAL size
+	size = LEN(string)
+
+	IF (start > 0 && end > 0 && end >= start)
+		IF (start > size)
+			start = size
+		END
+		RETURN CUT(string,start,end)
+	END
+	RETURN 0
+END
