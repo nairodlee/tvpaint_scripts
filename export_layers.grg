@@ -1,17 +1,34 @@
 // Export each layer to PNG with alpha
 
-Param none
+// GETTING FILENAME AND DEFINING PREFIX
+tv_getprojectname
+filePath = result
 
-tv_Request 'This script will only export displayed layers to the designated location.\nThe naming will be like so: [PREFIX]_[LAYER_NAME]_[SUFFIX]_0000.\nPlease give a unique name to each layer without space|Continue|Cancel'
-input = result
-if (input == 0)
+position = LastPos(filePath,'\')
+
+filePathLength = LEN(filePath)
+fileName = filePathWithoutExtension = SubString(filePath,position+1,filePathLength-5)
+
+
+fileNameIntegrity = CheckFileName(fileName,'-')
+IF (fileNameIntegrity != 5)
+  tv_Warn 'Check that the file matches this pattern:\n[PROJECT]-SC[SHOT NUMBER]-[CONTENT: anim/char/comp/etc..)-[YOUR NAME]-V[VERSION NUMBER]\nfor example: Sand-SC003-color-dorian-v13'
   EXIT
-end
+END
+
+fileVar = Replace(fileName,'-',' ')
+PARSE fileVar projectName shot type artist shotVersion
+
+prefix = projectName'-'shot'-'shotVersion
+
+
+Param none
 
 Extension = '.png'
 tv_SaveMode 'png' 'b32' 'nodither'
 tv_alphaloadmode 'nopremultiply'
 tv_alphasavemode 'nopremultiply'
+
 
 tv_LayerCurrentID
 OriginLayer = result
@@ -21,49 +38,11 @@ path = result
 path = concat(path,'\')
 
 
-tv_ReqString 'Enter file name prefix (can leave blank)'
-prefix = result
-if (CMP(prefix, 0)==1)
-  prefix = ''
-else
-  prefix = prefix'_'
-end
-
-tv_ReqString 'Enter file name suffix (can leave blank)'
-suffix = result
-if (CMP(suffix, 0)==1)
-  suffix = ''
-else
-  suffix = '_'suffix'_'
-end
-
-// returns null
-// can't get clipLastFrame to set as max value for markIn and markOut
-// tv_clipInfo
-// PARSE result clipName IsCurrent IsHidden IsSelected StoryboardStartFrame FirstFrame clipLastFrame misc
-
-
-tv_layergetimage
-currentFrame = result
-
-// tv_ReqNum [initial] [min] [max] [window title]
-tv_ReqNum currentFrame 0 10000 'Start exporting from frame number...'
-markIn = result
-if (CMP(markIn, 'Cancel')==1)
-  markIn = 0
-end
-
-tv_ReqNum 0 0 10000 'Export until frame number... (0 or Cancel for auto)'
-markOut = result
-if (CMP(markOut, 'Cancel')==1)
-  markOut = 0
-end
-
-tv_background 'none'
-
+tv_background 'none' // setting background to black
 
 layerIdx = 0
 loopEnded = 0
+markIn = 99999
 
 DO
   tv_LayerGetID layerIdx
@@ -79,7 +58,10 @@ DO
     state[layerIdx] = result
     name[layerIdx] = name
     layerEnd[layerIdx] = layerEnd
-
+    layerStart[layerIdx] = layerStart
+    if (layerStart < markIn)
+      markIn = layerStart
+    end
     if (CMP(display,'ON')==1)
       exportLayer[layerIdx] = 'export'
     else
@@ -91,18 +73,19 @@ UNTIL loopEnded
 
 nbOfLayers = layerIdx-2
 
+layerOrderNumber = 0
+
 FOR layerIdx = 0 TO nbOfLayers
   if (CMP(exportLayer[layerIdx], 'export')==1)
     tv_LayerDisplay layerID[layerIdx] 'ON'
 
-    layername = name[layerIdx]
-    filename = prefix''layername''suffix'0000'Extension
-    savepath = path''filename
-    layerMarkOut = markOut
+    layerZHeight = layerOrderNumber
+    layerOrderNumber = layerOrderNumber + 1
 
-    if (layerMarkOut == 0)
-      layerMarkOut = layerEnd[layerIdx]
-    end
+    layername = name[layerIdx]
+    filename = prefix'-'layername'-'layerOrderNumber'-''0000'Extension
+    savepath = path''filename
+    layerMarkOut = layerEnd[layerIdx]
 
     tv_saveSequence savepath markIn layerMarkOut
     tv_LayerDisplay layerID[layerIdx] 'OFF'
@@ -117,3 +100,5 @@ tv_LayerSet OriginLayer
 tv_background 'color'
 
 EXIT
+
+#INCLUDE "advanced.grg"
